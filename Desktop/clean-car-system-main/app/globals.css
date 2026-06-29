@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base surfaces */
+  --color-bg: #0a0e16;
+  --color-surface: #0e1420;
+  --color-surface-raised: #121a28;
+  --color-border: #1f2937;
+  --color-border-strong: #2a3544;
+
+  /* Text */
+  --color-text-primary: #f4f6f8;
+  --color-text-secondary: #9aa5b4;
+  --color-text-muted: #5f6b7d;
+
+  /* Brand */
+  --color-accent: #1dd882;
+  --color-accent-strong: #14c473;
+  --color-accent-soft: #0f3a2a;
+  --color-accent-text: #0a0e16;
+
+  /* Status */
+  --color-danger: #f0556b;
+  --color-warning: #e0a93d;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition
+           bg-white text-gray-900 placeholder:text-gray-400
+           border border-transparent
+           focus:ring-2 focus:ring-(--color-accent) focus:ring-offset-0;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           transition disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-accent-strong);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium
+           transition disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-strong);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-secondary);
+  }
+
+  .btn-danger-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium
+           transition disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: transparent;
+    color: var(--color-danger);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+  }
+  .btn-danger-outline:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  }
+
+  .card {
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+  }
+
+  .label {
+    @apply text-sm font-medium;
+    color: var(--color-text-secondary);
+  }
+
+  .pill {
+    @apply inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap;
+  }
+}
