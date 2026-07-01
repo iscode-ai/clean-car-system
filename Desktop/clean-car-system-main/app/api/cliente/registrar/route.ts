@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb() } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { autenticar } from "@/lib/authServer";
 import { UsuarioSistema } from "@/types";
 import { formatarTelefoneE164 } from "@/lib/os";

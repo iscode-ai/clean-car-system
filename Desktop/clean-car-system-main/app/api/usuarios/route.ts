@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 // src/app/api/usuarios/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb() } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getAuth } from "firebase-admin/auth";
 import { UsuarioSistema, UserRole } from "@/types";
 

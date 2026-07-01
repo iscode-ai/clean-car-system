@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 // src/app/api/servicos/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb() } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getAuth } from "firebase-admin/auth";
 import { Servico, UserRole } from "@/types";
 import { randomBytes } from "crypto";

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 // src/app/api/fotos/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb() } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getStorage } from "firebase-admin/storage";
 import { FotoOS } from "@/types";
 
