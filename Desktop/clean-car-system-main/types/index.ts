@@ -59,6 +59,7 @@ export interface OrdemServico {
   qrUsado: boolean;
   clienteNome: string;
   clienteTelefone: string;
+  clienteUid?: string;
   placa: string;
   veiculoModelo?: string;
   servicoId: string;
@@ -76,6 +77,9 @@ export interface OrdemServico {
 export interface UsuarioSistema {
   uid: string;
   nome: string;
+  email?: string;
+  telefone?: string;
   role: UserRole;
   ativo: boolean;
+  criadoEm?: string;
 }

@@ -3,11 +3,15 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { gerarNumeroOS, gerarTokenQRCode, formatarTelefoneE164 } from "@/lib/os";
 import { dispararWhatsApp } from "@/lib/n8n";
 import { OrdemServico } from "@/types";
+import { autenticar } from "@/lib/authServer";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { clienteNome, clienteTelefone, placa, veiculoModelo, servicoId, dataAgendada, horaAgendada } = body;
+
+    // Se o cliente estiver logado, vincula a OS à conta dele (opcional)
+    const caller = await autenticar(req, { exigirCadastro: false });
 
     if (!clienteNome || !clienteTelefone || !placa || !servicoId || !dataAgendada || !horaAgendada) {
       return NextResponse.json({ erro: "Campos obrigatórios faltando." }, { status: 400 });
@@ -28,6 +32,7 @@ export async function POST(req: NextRequest) {
       qrUsado: false,
       clienteNome,
       clienteTelefone: telefoneFormatado,
+      ...(caller ? { clienteUid: caller.uid } : {}),
       placa: placa.toUpperCase().replace(/\s/g, ""),
       veiculoModelo: veiculoModelo || "",
       servicoId,
