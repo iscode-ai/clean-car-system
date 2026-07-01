@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { autenticar } from "@/lib/authServer";
 import { formatarTelefoneE164 } from "@/lib/os";
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const caller = await autenticar(req);
   if (!caller) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
 
-  const snap = await adminDb.collection("usuarios").doc(caller.uid).get();
+  const snap = await getAdminDb().collection("usuarios").doc(caller.uid).get();
   if (!snap.exists) return NextResponse.json({ erro: "Perfil não encontrado." }, { status: 404 });
 
   return NextResponse.json({ usuario: snap.data() });
@@ -29,6 +29,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ erro: "Nada para atualizar." }, { status: 400 });
   }
 
-  await adminDb.collection("usuarios").doc(caller.uid).update(update);
+  await getAdminDb().collection("usuarios").doc(caller.uid).update(update);
   return NextResponse.json({ ok: true });
 }

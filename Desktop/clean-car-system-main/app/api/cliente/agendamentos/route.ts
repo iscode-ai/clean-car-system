@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { autenticar } from "@/lib/authServer";
 import { OrdemServico } from "@/types";
 
@@ -10,17 +10,17 @@ export async function GET(req: NextRequest) {
   const caller = await autenticar(req);
   if (!caller) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
 
-  const usuarioSnap = await adminDb.collection("usuarios").doc(caller.uid).get();
+  const usuarioSnap = await getAdminDb().collection("usuarios").doc(caller.uid).get();
   const telefone = usuarioSnap.exists ? (usuarioSnap.data()!.telefone as string | undefined) : undefined;
 
-  const porUid = await adminDb
+  const porUid = await getAdminDb()
     .collection("ordens_servico")
     .where("clienteUid", "==", caller.uid)
     .get();
 
   let porTelefone: FirebaseFirestore.QuerySnapshot | null = null;
   if (telefone) {
-    porTelefone = await adminDb
+    porTelefone = await getAdminDb()
       .collection("ordens_servico")
       .where("clienteTelefone", "==", telefone)
       .get();

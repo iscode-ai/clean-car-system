@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { dispararWhatsApp } from "@/lib/n8n";
 import { transicaoValida } from "@/lib/os";
 import { StatusHistoricoItem, StatusOS } from "@/types";
@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ erro: "osId, novoStatus e operadorUid são obrigatórios." }, { status: 400 });
     }
 
-    const osRef = adminDb.collection("ordens_servico").doc(osId);
+    const osRef = getAdminDb().collection("ordens_servico").doc(osId);
     const osSnap = await osRef.get();
     if (!osSnap.exists) return NextResponse.json({ erro: "OS não encontrada." }, { status: 404 });
 

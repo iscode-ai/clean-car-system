@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAuth } from "firebase-admin/auth";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import "@/lib/firebaseAdmin";
 import { UserRole } from "@/types";
 
@@ -27,7 +27,7 @@ export async function autenticar(
     const token = authHeader.replace("Bearer ", "");
     const decoded = await getAuth().verifyIdToken(token);
 
-    const snap = await adminDb.collection("usuarios").doc(decoded.uid).get();
+    const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
     if (!snap.exists) {
       if (opts.exigirCadastro === false) {
         return { uid: decoded.uid, email: decoded.email, role: "cliente" };

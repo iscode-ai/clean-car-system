@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { gerarNumeroOS, gerarTokenQRCode, formatarTelefoneE164 } from "@/lib/os";
 import { dispararWhatsApp } from "@/lib/n8n";
 import { OrdemServico } from "@/types";
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ erro: "Campos obrigatórios faltando." }, { status: 400 });
     }
 
-    const servicoSnap = await adminDb.collection("servicos").doc(servicoId).get();
+    const servicoSnap = await getAdminDb().collection("servicos").doc(servicoId).get();
     if (!servicoSnap.exists) {
       return NextResponse.json({ erro: "Serviço não encontrado." }, { status: 404 });
     }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       criadoEm: new Date().toISOString(),
     };
 
-    await adminDb.collection("ordens_servico").doc(osId).set(novaOS);
+    await getAdminDb().collection("ordens_servico").doc(osId).set(novaOS);
 
     await dispararWhatsApp({
       evento: "agendamento_criado",
@@ -75,18 +75,18 @@ export async function GET(req: NextRequest) {
   }
 
   if (osId) {
-    const snap = await adminDb.collection("ordens_servico").doc(osId).get();
+    const snap = await getAdminDb().collection("ordens_servico").doc(osId).get();
     if (!snap.exists) return NextResponse.json({ resultados: [] });
     return NextResponse.json({ resultados: [snap.data()] });
   }
 
   let q;
   if (placa) {
-    q = adminDb.collection("ordens_servico")
+    q = getAdminDb().collection("ordens_servico")
       .where("placa", "==", placa.toUpperCase().replace(/\s/g, ""))
       .orderBy("criadoEm", "desc").limit(5);
   } else {
-    q = adminDb.collection("ordens_servico")
+    q = getAdminDb().collection("ordens_servico")
       .where("clienteTelefone", "==", formatarTelefoneE164(telefone!))
       .orderBy("criadoEm", "desc").limit(5);
   }

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 // src/app/api/usuarios/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { getAuth } from "firebase-admin/auth";
 import { UsuarioSistema, UserRole } from "@/types";
 
@@ -13,7 +13,7 @@ async function autenticar(req: NextRequest): Promise<{ uid: string; role: UserRo
   try {
     const token = authHeader.replace("Bearer ", "");
     const decoded = await getAuth().verifyIdToken(token);
-    const snap = await adminDb.collection("usuarios").doc(decoded.uid).get();
+    const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
     if (!snap.exists) return null;
     const data = snap.data()!;
     return { uid: decoded.uid, role: data.role };
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
   }
 
-  const snap = await adminDb.collection("usuarios").get();
+  const snap = await getAdminDb().collection("usuarios").get();
   const usuarios = snap.docs.map((d) => d.data() as UsuarioSistema);
   return NextResponse.json({ usuarios });
 }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   }
 
   const novoUsuario: UsuarioSistema = { uid, nome, role, ativo: true };
-  await adminDb.collection("usuarios").doc(uid).set(novoUsuario);
+  await getAdminDb().collection("usuarios").doc(uid).set(novoUsuario);
   return NextResponse.json({ ok: true, usuario: novoUsuario });
 }
 
@@ -72,6 +72,6 @@ export async function PATCH(req: NextRequest) {
   if (role !== undefined) update.role = role;
   if (ativo !== undefined) update.ativo = ativo;
 
-  await adminDb.collection("usuarios").doc(uid).update(update);
+  await getAdminDb().collection("usuarios").doc(uid).update(update);
   return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 // src/app/api/fotos/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb() } from "@/lib/firebaseAdmin";
 import { getStorage } from "firebase-admin/storage";
 import { FotoOS } from "@/types";
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica se OS existe
-    const osRef = adminDb.collection("ordens_servico").doc(osId);
+    const osRef = getAdminDb().collection("ordens_servico").doc(osId);
     const osSnap = await osRef.get();
     if (!osSnap.exists) {
       return NextResponse.json({ erro: "OS não encontrada." }, { status: 404 });
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ erro: "osId obrigatório." }, { status: 400 });
   }
 
-  const osSnap = await adminDb.collection("ordens_servico").doc(osId).get();
+  const osSnap = await getAdminDb().collection("ordens_servico").doc(osId).get();
   if (!osSnap.exists) {
     return NextResponse.json({ erro: "OS não encontrada." }, { status: 404 });
   }
