@@ -45,8 +45,8 @@ export async function PATCH(req: NextRequest) {
 
     const novoHistorico: StatusHistoricoItem = {
       status: novoStatus,
-      timestamp: new Date().toISOString(),
-      operadorUid: caller.uid,
+      alteradoEm: new Date().toISOString(),
+      alteradoPor: caller.uid,
       observacao: observacao || "",
     };
 
