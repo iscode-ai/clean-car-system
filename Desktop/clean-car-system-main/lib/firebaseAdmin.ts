@@ -12,4 +12,6 @@ function getAdminApp() {
   });
 }
 
-export const adminDb = getFirestore(getAdminApp());
+export function getAdminDb() {
+  return getFirestore(getAdminApp());
+}
