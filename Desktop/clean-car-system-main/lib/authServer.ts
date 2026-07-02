@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { getAdminDb } from "@/lib/firebaseAdmin";
-import "@/lib/firebaseAdmin";
 import { UserRole } from "@/types";
 
 export interface ChamadorAutenticado {
@@ -10,12 +9,6 @@ export interface ChamadorAutenticado {
   role: UserRole;
 }
 
-/**
- * Verifica o ID token do Firebase enviado em "Authorization: Bearer <token>".
- * Retorna { uid, email, role } se o usuário existir em /usuarios.
- * Use `exigirCadastro: false` quando o usuário pode ainda não ter doc
- * criado em /usuarios (ex: durante o auto-cadastro de cliente).
- */
 export async function autenticar(
   req: NextRequest,
   opts: { exigirCadastro?: boolean } = {}

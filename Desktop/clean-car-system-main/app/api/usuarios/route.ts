@@ -1,77 +1,86 @@
 export const dynamic = "force-dynamic";
-// src/app/api/usuarios/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getAuth } from "firebase-admin/auth";
 import { UsuarioSistema, UserRole } from "@/types";
 
-// Helper: valida token e retorna role do chamador
-async function autenticar(req: NextRequest): Promise<{ uid: string; role: UserRole } | null> {
+async function autenticarAdmin(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
-
   try {
     const token = authHeader.replace("Bearer ", "");
     const decoded = await getAuth().verifyIdToken(token);
     const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
     if (!snap.exists) return null;
-    const data = snap.data()!;
-    return { uid: decoded.uid, role: data.role };
+    const role = snap.data()!.role as UserRole;
+    if (role !== "admin") return null;
+    return { uid: decoded.uid, role };
   } catch {
     return null;
   }
 }
 
-// GET /api/usuarios — lista todos (só admin)
+// GET — lista todos os usuários (admin)
 export async function GET(req: NextRequest) {
-  const caller = await autenticar(req);
-  if (!caller || caller.role !== "admin") {
-    return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
-  }
+  const caller = await autenticarAdmin(req);
+  if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
 
-  const snap = await getAdminDb().collection("usuarios").get();
-  const usuarios = snap.docs.map((d) => d.data() as UsuarioSistema);
-  return NextResponse.json({ usuarios });
+  try {
+    const snap = await getAdminDb().collection("usuarios").get();
+    const usuarios = snap.docs.map((d) => d.data());
+    return NextResponse.json({ usuarios });
+  } catch (err) {
+    console.error("Erro ao listar usuários:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
+  }
 }
 
-// POST /api/usuarios — cria usuário (só admin)
+// POST — criar operador/admin (admin)
 export async function POST(req: NextRequest) {
-  const caller = await autenticar(req);
-  if (!caller || caller.role !== "admin") {
-    return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
-  }
+  const caller = await autenticarAdmin(req);
+  if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
 
-  const { uid, nome, role } = await req.json();
-  if (!uid || !nome || !role) {
-    return NextResponse.json({ erro: "uid, nome e role são obrigatórios." }, { status: 400 });
-  }
+  try {
+    const { nome, email, senha, role, telefone } = await req.json();
+    if (!nome || !email || !senha || !role) {
+      return NextResponse.json({ erro: "Nome, email, senha e role são obrigatórios." }, { status: 400 });
+    }
 
-  const rolesValidas: UserRole[] = ["cliente", "operador", "admin"];
-  if (!rolesValidas.includes(role)) {
-    return NextResponse.json({ erro: "Role inválida." }, { status: 400 });
-  }
+    const userRecord = await getAuth().createUser({ email, password: senha, displayName: nome });
 
-  const novoUsuario: UsuarioSistema = { uid, nome, role, ativo: true };
-  await getAdminDb().collection("usuarios").doc(uid).set(novoUsuario);
-  return NextResponse.json({ ok: true, usuario: novoUsuario });
+    const novoUsuario: UsuarioSistema = {
+      uid: userRecord.uid,
+      nome,
+      email,
+      telefone: telefone || "",
+      role: role as UserRole,
+      ativo: true,
+      criadoEm: new Date().toISOString(),
+    };
+
+    await getAdminDb().collection("usuarios").doc(userRecord.uid).set(novoUsuario);
+    return NextResponse.json({ usuario: novoUsuario });
+  } catch (err: unknown) {
+    const msg = (err as { message?: string })?.message || "Erro interno.";
+    console.error("Erro ao criar usuário:", err);
+    return NextResponse.json({ erro: msg }, { status: 500 });
+  }
 }
 
-// PATCH /api/usuarios — atualiza role ou ativo (só admin)
+// PATCH — ativar/desativar usuário (admin)
 export async function PATCH(req: NextRequest) {
-  const caller = await autenticar(req);
-  if (!caller || caller.role !== "admin") {
-    return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
+  const caller = await autenticarAdmin(req);
+  if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
+
+  try {
+    const { uid, ativo } = await req.json();
+    if (!uid || ativo === undefined) {
+      return NextResponse.json({ erro: "uid e ativo são obrigatórios." }, { status: 400 });
+    }
+    await getAdminDb().collection("usuarios").doc(uid).update({ ativo });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Erro ao atualizar usuário:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
   }
-
-  const { uid, role, ativo } = await req.json();
-  if (!uid) {
-    return NextResponse.json({ erro: "uid obrigatório." }, { status: 400 });
-  }
-
-  const update: Partial<UsuarioSistema> = {};
-  if (role !== undefined) update.role = role;
-  if (ativo !== undefined) update.ativo = ativo;
-
-  await getAdminDb().collection("usuarios").doc(uid).update(update);
-  return NextResponse.json({ ok: true });
 }

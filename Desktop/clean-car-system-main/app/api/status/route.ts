@@ -2,62 +2,65 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { dispararWhatsApp } from "@/lib/n8n";
-import { transicaoValida } from "@/lib/os";
 import { StatusHistoricoItem, StatusOS } from "@/types";
+import { autenticar } from "@/lib/authServer";
 
-const EVENTO_POR_STATUS: Partial<Record<StatusOS, string>> = {
-  em_atendimento: "status_atualizado",
-  finalizado: "servico_finalizado",
-  aguardando_retirada: "status_atualizado",
-  entregue: "veiculo_entregue",
+const TRANSICOES_VALIDAS: Record<StatusOS, StatusOS[]> = {
+  agendado: ["confirmado", "cancelado"],
+  confirmado: ["checkin_realizado", "cancelado"],
+  checkin_realizado: ["em_atendimento", "cancelado"],
+  em_atendimento: ["finalizado"],
+  finalizado: ["aguardando_retirada", "entregue"],
+  aguardando_retirada: ["entregue"],
+  entregue: [],
+  cancelado: [],
 };
 
 export async function PATCH(req: NextRequest) {
+  const caller = await autenticar(req);
+  if (!caller || (caller.role !== "operador" && caller.role !== "admin")) {
+    return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
+  }
+
   try {
-    const { osId, novoStatus, operadorUid, observacao } = await req.json();
-    if (!osId || !novoStatus || !operadorUid) {
-      return NextResponse.json({ erro: "osId, novoStatus e operadorUid são obrigatórios." }, { status: 400 });
+    const { osId, novoStatus, observacao } = await req.json();
+    if (!osId || !novoStatus) {
+      return NextResponse.json({ erro: "osId e novoStatus são obrigatórios." }, { status: 400 });
     }
 
-    const osRef = getAdminDb().collection("ordens_servico").doc(osId);
-    const osSnap = await osRef.get();
-    if (!osSnap.exists) return NextResponse.json({ erro: "OS não encontrada." }, { status: 404 });
+    const ref = getAdminDb().collection("ordens_servico").doc(osId);
+    const snap = await ref.get();
+    if (!snap.exists) return NextResponse.json({ erro: "OS não encontrada." }, { status: 404 });
 
-    const os = osSnap.data()!;
-    if (!transicaoValida(os.status, novoStatus)) {
-      return NextResponse.json({ erro: `Transição inválida: "${os.status}" → "${novoStatus}".` }, { status: 409 });
+    const os = snap.data()!;
+    const statusAtual = os.status as StatusOS;
+    const transicoes = TRANSICOES_VALIDAS[statusAtual] || [];
+
+    if (!transicoes.includes(novoStatus)) {
+      return NextResponse.json(
+        { erro: `Transição inválida: ${statusAtual} → ${novoStatus}` },
+        { status: 400 }
+      );
     }
 
     const novoHistorico: StatusHistoricoItem = {
       status: novoStatus,
-      alteradoEm: new Date().toISOString(),
-      alteradoPor: operadorUid,
-      observacao,
+      timestamp: new Date().toISOString(),
+      operadorUid: caller.uid,
+      observacao: observacao || "",
     };
 
-    await osRef.update({ status: novoStatus, historico: [...os.historico, novoHistorico] });
-
-    const evento = EVENTO_POR_STATUS[novoStatus as StatusOS] || "status_atualizado";
-    await dispararWhatsApp({
-      evento: evento as any,
-      telefone: os.clienteTelefone,
-      osId: os.id,
-      nomeCliente: os.clienteNome,
-      dados: { novoStatus },
+    await ref.update({
+      status: novoStatus,
+      historico: [...(os.historico || []), novoHistorico],
+      ...(caller.role === "operador" ? { operadorResponsavel: caller.uid } : {}),
     });
 
-    if (novoStatus === "entregue") {
-      await dispararWhatsApp({
-        evento: "pedido_avaliacao",
-        telefone: os.clienteTelefone,
-        osId: os.id,
-        nomeCliente: os.clienteNome,
-      });
-    }
+    await dispararWhatsApp(`status_${novoStatus}`, { ...os, status: novoStatus });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ erro: "Erro interno ao atualizar status." }, { status: 500 });
+    console.error("Erro ao atualizar status:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
   }
 }
