@@ -36,8 +36,7 @@ export async function POST(req: NextRequest) {
     const novaFoto: FotoOS = {
       url,
       tipo,
-      timestamp: new Date().toISOString(),
-      operadorUid: caller.uid,
+      enviadaEm: new Date().toISOString(),
     };
 
     const ref = getAdminDb().collection("ordens_servico").doc(osId);
