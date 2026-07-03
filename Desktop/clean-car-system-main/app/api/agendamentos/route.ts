@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         .collection("ordens_servico")
         .where("placa", "==", placa.toUpperCase())
         .get();
-      return NextResponse.json({ resultados: snap.docs.map((d) => d.data()) });
+      return NextResponse.json({ resultados: snap.docs.map((d: import("firebase-admin/firestore").QueryDocumentSnapshot) => d.data()) });
     }
 
     // Busca por telefone
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         .collection("ordens_servico")
         .where("clienteTelefone", "==", tel)
         .get();
-      return NextResponse.json({ resultados: snap.docs.map((d) => d.data()) });
+      return NextResponse.json({ resultados: snap.docs.map((d: import("firebase-admin/firestore").QueryDocumentSnapshot) => d.data()) });
     }
 
     // Busca por data (admin)
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         .collection("ordens_servico")
         .where("dataAgendada", "==", data)
         .get();
-      return NextResponse.json({ ordens: snap.docs.map((d) => d.data()) });
+      return NextResponse.json({ ordens: snap.docs.map((d: import("firebase-admin/firestore").QueryDocumentSnapshot) => d.data()) });
     }
 
     return NextResponse.json({ erro: "Informe osId, placa, telefone ou data." }, { status: 400 });
