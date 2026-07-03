@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { gerarNumeroOS, gerarTokenQRCode, formatarTelefoneE164 } from "@/lib/os";
 import { dispararWhatsApp } from "@/lib/n8n";
 import { OrdemServico } from "@/types";
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
       .collection("ordens_servico")
       .where("dataAgendada", "==", data)
       .get();
-    const ordens = snap.docs.map((d) => d.data());
+    const ordens = snap.docs.map((d: QueryDocumentSnapshot) => d.data());
     return NextResponse.json({ ordens });
   } catch (err) {
     console.error("Erro ao listar agendamentos:", err);
