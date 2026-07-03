@@ -1,11 +1,60 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
-import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { gerarNumeroOS, gerarTokenQRCode, formatarTelefoneE164 } from "@/lib/os";
 import { dispararWhatsApp } from "@/lib/n8n";
 import { OrdemServico } from "@/types";
 import { autenticar } from "@/lib/authServer";
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const data = searchParams.get("data");
+    const osId = searchParams.get("osId");
+    const placa = searchParams.get("placa");
+    const telefone = searchParams.get("telefone");
+
+    // Busca por ID da OS
+    if (osId) {
+      const snap = await getAdminDb().collection("ordens_servico").doc(osId).get();
+      if (!snap.exists) return NextResponse.json({ resultados: [] });
+      return NextResponse.json({ resultados: [snap.data()] });
+    }
+
+    // Busca por placa
+    if (placa) {
+      const snap = await getAdminDb()
+        .collection("ordens_servico")
+        .where("placa", "==", placa.toUpperCase())
+        .get();
+      return NextResponse.json({ resultados: snap.docs.map((d) => d.data()) });
+    }
+
+    // Busca por telefone
+    if (telefone) {
+      const tel = formatarTelefoneE164(telefone);
+      const snap = await getAdminDb()
+        .collection("ordens_servico")
+        .where("clienteTelefone", "==", tel)
+        .get();
+      return NextResponse.json({ resultados: snap.docs.map((d) => d.data()) });
+    }
+
+    // Busca por data (admin)
+    if (data) {
+      const snap = await getAdminDb()
+        .collection("ordens_servico")
+        .where("dataAgendada", "==", data)
+        .get();
+      return NextResponse.json({ ordens: snap.docs.map((d) => d.data()) });
+    }
+
+    return NextResponse.json({ erro: "Informe osId, placa, telefone ou data." }, { status: 400 });
+  } catch (err) {
+    console.error("Erro ao buscar agendamentos:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,14 +90,12 @@ export async function POST(req: NextRequest) {
       dataAgendada,
       horaAgendada,
       status: "agendado",
-      historico: [
-        {
-          status: "agendado",
-          alteradoEm: new Date().toISOString(),
-          alteradoPor: "sistema",
-          observacao: "Agendamento criado pelo cliente.",
-        },
-      ],
+      historico: [{
+        status: "agendado",
+        alteradoEm: new Date().toISOString(),
+        alteradoPor: "sistema",
+        observacao: "Agendamento criado.",
+      }],
       fotos: [],
       criadoEm: new Date().toISOString(),
     };
@@ -60,24 +107,5 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Erro ao criar agendamento:", err);
     return NextResponse.json({ erro: "Erro interno ao criar agendamento." }, { status: 500 });
-  }
-}
-
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const data = searchParams.get("data");
-    if (!data) {
-      return NextResponse.json({ erro: "Parâmetro 'data' obrigatório." }, { status: 400 });
-    }
-    const snap = await getAdminDb()
-      .collection("ordens_servico")
-      .where("dataAgendada", "==", data)
-      .get();
-    const ordens = snap.docs.map((d: QueryDocumentSnapshot) => d.data());
-    return NextResponse.json({ ordens });
-  } catch (err) {
-    console.error("Erro ao listar agendamentos:", err);
-    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
   }
 }
