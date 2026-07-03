@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebaseAdmin";
-import { getAuth } from "firebase-admin/auth";
+import { getAdminDb, getAdminAuth } from "@/lib/firebaseAdmin";
+
 import { Servico, UserRole } from "@/types";
 import { randomBytes } from "crypto";
 
@@ -13,7 +13,7 @@ async function autenticarAdmin(req: NextRequest) {
   }
   try {
     const token = authHeader.replace("Bearer ", "");
-    const decoded = await getAuth().verifyIdToken(token);
+    const decoded = await getAdminAuth().verifyIdToken(token);
     console.log("[servicos] uid decodificado:", decoded.uid);
 
     const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();

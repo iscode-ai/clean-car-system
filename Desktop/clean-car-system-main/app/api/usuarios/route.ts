@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebaseAdmin";
-import { getAuth } from "firebase-admin/auth";
+import { getAdminDb, getAdminAuth } from "@/lib/firebaseAdmin";
+
 import { UsuarioSistema, UserRole } from "@/types";
 
 async function autenticarAdmin(req: NextRequest) {
@@ -9,7 +9,7 @@ async function autenticarAdmin(req: NextRequest) {
   if (!authHeader?.startsWith("Bearer ")) return null;
   try {
     const token = authHeader.replace("Bearer ", "");
-    const decoded = await getAuth().verifyIdToken(token);
+    const decoded = await getAdminAuth().verifyIdToken(token);
     const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
     if (!snap.exists) return null;
     const role = snap.data()!.role as UserRole;
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ erro: "Nome, email, senha e role são obrigatórios." }, { status: 400 });
     }
 
-    const userRecord = await getAuth().createUser({ email, password: senha, displayName: nome });
+    const userRecord = await getAdminAuth().createUser({ email, password: senha, displayName: nome });
 
     const novoUsuario: UsuarioSistema = {
       uid: userRecord.uid,

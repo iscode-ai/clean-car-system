@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { getAuth } from "firebase-admin/auth";
-import { getAdminDb } from "@/lib/firebaseAdmin";
+
+import { getAdminDb, getAdminAuth } from "@/lib/firebaseAdmin";
 import { UserRole } from "@/types";
 
 export interface ChamadorAutenticado {
@@ -18,7 +18,7 @@ export async function autenticar(
 
   try {
     const token = authHeader.replace("Bearer ", "");
-    const decoded = await getAuth().verifyIdToken(token);
+    const decoded = await getAdminAuth().verifyIdToken(token);
 
     const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
     if (!snap.exists) {
