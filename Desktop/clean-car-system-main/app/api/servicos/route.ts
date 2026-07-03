@@ -5,38 +5,45 @@ import { getAuth } from "firebase-admin/auth";
 import { Servico, UserRole } from "@/types";
 import { randomBytes } from "crypto";
 
-async function autenticarAdmin(req: NextRequest): Promise<{ uid: string; role: UserRole } | null> {
+async function autenticarAdmin(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[servicos] sem header Authorization");
+    return null;
+  }
   try {
     const token = authHeader.replace("Bearer ", "");
     const decoded = await getAuth().verifyIdToken(token);
+    console.log("[servicos] uid decodificado:", decoded.uid);
+
     const snap = await getAdminDb().collection("usuarios").doc(decoded.uid).get();
+    console.log("[servicos] doc existe:", snap.exists, "data:", snap.data());
+
     if (!snap.exists) return null;
     const role = snap.data()!.role as UserRole;
-    if (role !== "admin") return null;
+    if (role !== "admin") {
+      console.log("[servicos] role não é admin:", role);
+      return null;
+    }
     return { uid: decoded.uid, role };
-  } catch {
+  } catch (err) {
+    console.error("[servicos] erro ao autenticar:", err);
     return null;
   }
 }
 
-// GET público — lista serviços ativos
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const todos = searchParams.get("todos") === "1";
-
     let snap;
     if (todos) {
-      // Requer admin
       const caller = await autenticarAdmin(req);
       if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
       snap = await getAdminDb().collection("servicos").get();
     } else {
       snap = await getAdminDb().collection("servicos").where("ativo", "==", true).get();
     }
-
     const servicos = snap.docs.map((d) => d.data());
     return NextResponse.json({ servicos });
   } catch (err) {
@@ -45,7 +52,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST — criar serviço (admin)
 export async function POST(req: NextRequest) {
   const caller = await autenticarAdmin(req);
   if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
@@ -56,17 +62,11 @@ export async function POST(req: NextRequest) {
     if (!nome || !preco || !duracaoMin) {
       return NextResponse.json({ erro: "Nome, preço e duração são obrigatórios." }, { status: 400 });
     }
-
     const id = randomBytes(4).toString("hex");
     const novoServico: Servico = {
-      id,
-      nome,
-      descricao: descricao || "",
-      preco: Number(preco),
-      duracaoMin: Number(duracaoMin),
-      ativo: true,
+      id, nome, descricao: descricao || "",
+      preco: Number(preco), duracaoMin: Number(duracaoMin), ativo: true,
     };
-
     await getAdminDb().collection("servicos").doc(id).set(novoServico);
     return NextResponse.json({ servico: novoServico });
   } catch (err) {
@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH — editar serviço (admin)
 export async function PATCH(req: NextRequest) {
   const caller = await autenticarAdmin(req);
   if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
@@ -84,10 +83,8 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { id, ...campos } = body;
     if (!id) return NextResponse.json({ erro: "ID obrigatório." }, { status: 400 });
-
     if (campos.preco) campos.preco = Number(campos.preco);
     if (campos.duracaoMin) campos.duracaoMin = Number(campos.duracaoMin);
-
     await getAdminDb().collection("servicos").doc(id).update(campos);
     return NextResponse.json({ ok: true });
   } catch (err) {
