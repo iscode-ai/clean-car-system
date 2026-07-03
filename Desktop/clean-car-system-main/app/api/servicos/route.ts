@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     } else {
       snap = await getAdminDb().collection("servicos").where("ativo", "==", true).get();
     }
-    const servicos = snap.docs.map((d) => d.data());
+    const servicos = snap.docs.map((d: import("firebase-admin/firestore").QueryDocumentSnapshot) => d.data());
     return NextResponse.json({ servicos });
   } catch (err) {
     console.error("Erro ao listar serviços:", err);
