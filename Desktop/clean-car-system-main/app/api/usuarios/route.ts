@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const snap = await getAdminDb().collection("usuarios").get();
-    const usuarios = snap.docs.map((d) => d.data());
+    const usuarios = snap.docs.map((d: import("firebase-admin/firestore").QueryDocumentSnapshot) => d.data());
     return NextResponse.json({ usuarios });
   } catch (err) {
     console.error("Erro ao listar usuários:", err);
