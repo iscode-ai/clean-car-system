@@ -27,10 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [carregando, setCarregando] = useState(true);
 
   async function carregarPerfil(u: User | null) {
-    if (!u) {
-      setPerfil(null);
-      return;
-    }
+    if (!u) { setPerfil(null); return; }
     try {
       const token = await u.getIdToken();
       const res = await fetch("/api/cliente/perfil", {
@@ -50,22 +47,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      await carregarPerfil(u);
+      if (u) {
+        await carregarPerfil(u);
+      } else {
+        setPerfil(null);
+      }
       setCarregando(false);
     });
     return () => unsub();
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        perfil,
-        carregando,
-        recarregarPerfil: () => carregarPerfil(user),
-        sair: () => signOut(auth),
-      }}
-    >
+    <AuthContext.Provider value={{
+      user, perfil, carregando,
+      recarregarPerfil: () => carregarPerfil(user),
+      sair: () => signOut(auth),
+    }}>
       {children}
     </AuthContext.Provider>
   );
