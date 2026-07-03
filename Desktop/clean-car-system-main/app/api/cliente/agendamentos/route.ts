@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { autenticar } from "@/lib/authServer";
 import { OrdemServico } from "@/types";
+import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 export async function GET(req: NextRequest) {
   const caller = await autenticar(req);
@@ -18,14 +19,14 @@ export async function GET(req: NextRequest) {
       .get();
 
     const mapa = new Map<string, OrdemServico>();
-    porUid.docs.forEach((d) => mapa.set(d.id, d.data() as OrdemServico));
+    porUid.docs.forEach((d: QueryDocumentSnapshot) => mapa.set(d.id, d.data() as OrdemServico));
 
     if (telefone) {
       const porTelefone = await getAdminDb()
         .collection("ordens_servico")
         .where("clienteTelefone", "==", telefone)
         .get();
-      porTelefone.docs.forEach((d) => mapa.set(d.id, d.data() as OrdemServico));
+      porTelefone.docs.forEach((d: QueryDocumentSnapshot) => mapa.set(d.id, d.data() as OrdemServico));
     }
 
     const resultados = Array.from(mapa.values()).sort((a, b) =>
