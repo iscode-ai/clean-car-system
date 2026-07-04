@@ -1,11 +1,10 @@
 "use client";
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect") || "/admin";
   const [form, setForm] = useState({ email: "", senha: "" });
@@ -24,8 +23,14 @@ function LoginForm() {
         body: JSON.stringify({ token }),
       });
       const data = await res.json();
-      if (!res.ok) { setErro(data.erro || "Acesso negado."); await auth.signOut(); setCarregando(false); return; }
-      router.push(data.role === "operador" ? "/operador" : redirect);
+      if (!res.ok) {
+        setErro(data.erro || "Acesso negado.");
+        await auth.signOut();
+        setCarregando(false);
+        return;
+      }
+      // window.location força reload completo para o middleware ler o cookie
+      window.location.href = data.role === "operador" ? "/operador" : redirect;
     } catch (err: unknown) {
       const codigo = (err as { code?: string })?.code || "";
       const msgs: Record<string, string> = {
