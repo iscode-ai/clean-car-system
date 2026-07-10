@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Servico } from "@/types";
 import { useAuth } from "./context/AuthContext";
+import StatusStepper from "./components/StatusStepper";
 
 const STEPS = [
   { icon: "📅", titulo: "Agende online", desc: "Escolha serviço, data e horário sem precisar ligar." },
@@ -60,6 +61,25 @@ export default function Home() {
             </Link>
           )}
         </div>
+
+        {/* Mockup visual do acompanhamento */}
+        <div className="mt-16 max-w-xl mx-auto">
+          <div className="card p-5 text-left" style={{ borderColor: "color-mix(in srgb, var(--color-accent) 25%, transparent)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-mono text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                OS-260710-104829
+              </span>
+              <span className="pill text-xs" style={{ backgroundColor: "var(--color-accent-soft)", color: "var(--color-accent)" }}>
+                🔧 Em atendimento
+              </span>
+            </div>
+            <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>🚗 ABC1D23 — Corolla 2022</p>
+            <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>Lavagem completa + polimento</p>
+            <div className="pt-4" style={{ borderTop: "0.5px solid var(--color-border)" }}>
+              <StatusStepper status="em_atendimento" />
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Como funciona */}
@@ -77,6 +97,22 @@ export default function Home() {
               <span className="text-3xl mb-3 block">{s.icon}</span>
               <p className="font-semibold">{s.titulo}</p>
               <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Números */}
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="card p-6 sm:p-8 grid grid-cols-3 gap-4 text-center">
+          {[
+            { valor: "100%", label: "Online, sem filas" },
+            { valor: "WhatsApp", label: "Notificação automática" },
+            { valor: "Tempo real", label: "Acompanhamento do status" },
+          ].map((n) => (
+            <div key={n.label}>
+              <p className="text-xl sm:text-2xl font-bold" style={{ color: "var(--color-accent)" }}>{n.valor}</p>
+              <p className="text-xs sm:text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>{n.label}</p>
             </div>
           ))}
         </div>
