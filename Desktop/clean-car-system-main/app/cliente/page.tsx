@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { OrdemServico, STATUS_LABELS, StatusOS } from "@/types";
+import StatusStepper from "../components/StatusStepper";
 
 const STATUS_COLORS: Record<StatusOS, { bg: string; text: string }> = {
   agendado: { bg: "#1a2235", text: "#60a5fa" },
@@ -147,32 +148,39 @@ export default function ClienteArea() {
             <Link
               key={os.id}
               href={`/acompanhar?os=${os.id}`}
-              className="card p-4 flex items-center justify-between gap-4 transition hover:border-(--color-border-strong) block"
+              className="card p-4 transition hover:border-(--color-border-strong) block"
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                    {os.id}
-                  </span>
-                  <span
-                    className="pill text-xs"
-                    style={{ backgroundColor: STATUS_COLORS[os.status].bg, color: STATUS_COLORS[os.status].text }}
-                  >
-                    {STATUS_ICONS[os.status]} {STATUS_LABELS[os.status]}
-                  </span>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                      {os.id}
+                    </span>
+                    <span
+                      className="pill text-xs"
+                      style={{ backgroundColor: STATUS_COLORS[os.status].bg, color: STATUS_COLORS[os.status].text }}
+                    >
+                      {STATUS_ICONS[os.status]} {STATUS_LABELS[os.status]}
+                    </span>
+                  </div>
+                  <p className="font-semibold mt-1 truncate">{os.servicoNome}</p>
+                  <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                    🚗 {os.placa}{os.veiculoModelo ? ` — ${os.veiculoModelo}` : ""}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                    📅 {formatarData(os.dataAgendada)} às {os.horaAgendada}
+                  </p>
                 </div>
-                <p className="font-semibold mt-1 truncate">{os.servicoNome}</p>
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                  🚗 {os.placa}{os.veiculoModelo ? ` — ${os.veiculoModelo}` : ""}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-                  📅 {formatarData(os.dataAgendada)} às {os.horaAgendada}
-                </p>
+                <div className="text-right shrink-0">
+                  <p className="font-semibold text-sm">R$ {os.servicoPreco.toFixed(2)}</p>
+                  <span className="text-xs" style={{ color: "var(--color-accent)" }}>Ver detalhes →</span>
+                </div>
               </div>
-              <div className="text-right shrink-0">
-                <p className="font-semibold text-sm">R$ {os.servicoPreco.toFixed(2)}</p>
-                <span className="text-xs" style={{ color: "var(--color-accent)" }}>Ver detalhes →</span>
-              </div>
+              {os.status !== "cancelado" && os.status !== "entregue" && (
+                <div className="mt-4 pt-4" style={{ borderTop: "0.5px solid var(--color-border)" }}>
+                  <StatusStepper status={os.status} />
+                </div>
+              )}
             </Link>
           ))}
         </div>

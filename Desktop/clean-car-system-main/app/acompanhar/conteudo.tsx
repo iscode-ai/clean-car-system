@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { OrdemServico, STATUS_LABELS, STATUS_FLOW, StatusOS } from "@/types";
+import { OrdemServico, STATUS_LABELS, StatusOS } from "@/types";
+import StatusStepper from "../components/StatusStepper";
 
 const STATUS_ICONS: Record<StatusOS, string> = {
   agendado: "📅",
@@ -76,8 +77,6 @@ export default function AcompanharConteudo() {
       setCarregando(false);
     }
   }
-
-  const idxStatus = selecionada ? STATUS_FLOW.indexOf(selecionada.status) : -1;
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
@@ -170,42 +169,9 @@ export default function AcompanharConteudo() {
 
           {/* Progresso */}
           {selecionada.status !== "cancelado" && (
-            <div>
-              <p className="text-sm font-medium mb-3">Progresso</p>
-              <div className="space-y-2">
-                {STATUS_FLOW.map((s, idx) => {
-                  const feito = idx <= idxStatus;
-                  const atual = idx === idxStatus;
-                  return (
-                    <div key={s} className="flex items-center gap-3">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                        style={
-                          feito
-                            ? atual
-                              ? { backgroundColor: "var(--color-accent)", color: "var(--color-accent-text)", boxShadow: "0 0 0 4px var(--color-accent-soft)" }
-                              : { backgroundColor: "var(--color-accent)", color: "var(--color-accent-text)" }
-                            : { backgroundColor: "var(--color-surface-raised)", color: "var(--color-text-muted)" }
-                        }
-                      >
-                        {feito && !atual ? "✓" : idx + 1}
-                      </div>
-                      <span
-                        className="text-sm"
-                        style={
-                          feito
-                            ? atual
-                              ? { fontWeight: 600, color: "var(--color-accent)" }
-                              : { color: "var(--color-text-primary)" }
-                            : { color: "var(--color-text-muted)" }
-                        }
-                      >
-                        {STATUS_ICONS[s]} {STATUS_LABELS[s]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="card p-5">
+              <p className="text-sm font-medium mb-4">Progresso do atendimento</p>
+              <StatusStepper status={selecionada.status} />
             </div>
           )}
 
