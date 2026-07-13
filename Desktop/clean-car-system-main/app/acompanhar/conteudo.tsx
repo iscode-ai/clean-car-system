@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { OrdemServico, STATUS_LABELS, StatusOS } from "@/types";
 import StatusStepper from "../components/StatusStepper";
+import PageHeader from "../components/PageHeader";
 
 const STATUS_ICONS: Record<StatusOS, string> = {
   agendado: "📅",
@@ -80,12 +81,11 @@ export default function AcompanharConteudo() {
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">Acompanhar atendimento</h1>
-        <p className="mt-2" style={{ color: "var(--color-text-secondary)" }}>
-          Consulte pelo número da placa ou telefone cadastrado.
-        </p>
-      </div>
+      <PageHeader
+        icon="🔍"
+        title="Acompanhar atendimento"
+        subtitle="Consulte pelo número da placa ou telefone cadastrado."
+      />
 
       {!osParam && (
         <form onSubmit={buscar} className="card p-5 space-y-4">

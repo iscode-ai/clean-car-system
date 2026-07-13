@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { OrdemServico, STATUS_LABELS, STATUS_FLOW, StatusOS } from "@/types";
+import PageHeader from "../components/PageHeader";
 
 // qrcode scanner via jsQR (instalar: npm i jsqr)
 // A câmera lê frames do vídeo e tenta decodificar o QR
@@ -219,12 +220,11 @@ export default function OperadorPage() {
     return (
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="flex justify-between items-center mb-2">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">Check-in por QR Code</h1>
-            <p className="mt-2" style={{ color: "var(--color-text-secondary)" }}>
-              Escaneie o QR do cliente para dar entrada no veículo.
-            </p>
-          </div>
+          <PageHeader
+            icon="📲"
+            title="Check-in por QR Code"
+            subtitle="Escaneie o QR do cliente para dar entrada no veículo."
+          />
           <button onClick={() => signOut(auth)} className="text-sm shrink-0 ml-4" style={{ color: "var(--color-text-muted)" }}>
             Sair
           </button>

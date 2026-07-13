@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { Servico } from "@/types";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import PageHeader from "../components/PageHeader";
 
 export default function AgendarPage() {
   const router = useRouter();
@@ -74,10 +75,11 @@ export default function AgendarPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold tracking-tight mb-2">Novo Agendamento</h1>
-      <p className="mb-8" style={{ color: "var(--color-text-secondary)" }}>
-        Escolha o serviço, data, horário e nos informe seus dados.
-      </p>
+      <PageHeader
+        icon="📅"
+        title="Novo Agendamento"
+        subtitle="Escolha o serviço, data, horário e nos informe seus dados."
+      />
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Seção: Serviço */}
