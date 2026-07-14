@@ -546,3 +546,317 @@ function StatusBadge({ status }: { status: StatusOS }) {
     </span>
   );
 }
+
+// ─── CLIENTES ────────────────────────────────────────────────────────────────
+interface ClienteAgregado {
+  telefone: string;
+  nome: string;
+  totalGasto: number;
+  qtdServicos: number;
+  ultimoAtendimento: string;
+  placas: string[];
+}
+
+function Clientes({ user }: { user: User }) {
+  const [clientes, setClientes] = useState<ClienteAgregado[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState("");
+
+  useEffect(() => {
+    async function carregar() {
+      setCarregando(true);
+      const token = await user.getIdToken();
+      const res = await fetch("/api/clientes", { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setClientes(data.clientes ?? []);
+      setCarregando(false);
+    }
+    carregar();
+  }, [user]);
+
+  const filtrados = clientes.filter(
+    (c) =>
+      c.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      c.telefone.includes(busca) ||
+      c.placas.some((p) => p.toLowerCase().includes(busca.toLowerCase()))
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-bold">Clientes</h2>
+        <input
+          className="input text-sm max-w-xs"
+          placeholder="Buscar por nome, telefone ou placa..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </div>
+
+      {carregando ? (
+        <div className="card h-40 animate-pulse" />
+      ) : filtrados.length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Nenhum cliente encontrado.</p>
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ backgroundColor: "var(--color-surface-raised)" }}>
+                {["Nome", "Telefone", "Placas", "Serviços", "Total gasto", "Último atendimento"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-xs font-medium text-left" style={{ color: "var(--color-text-muted)" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtrados.map((c, i) => (
+                <tr key={c.telefone} style={{ borderTop: i === 0 ? "none" : "1px solid var(--color-border)" }}>
+                  <td className="px-4 py-3 font-medium">{c.nome}</td>
+                  <td className="px-4 py-3" style={{ color: "var(--color-text-secondary)" }}>{c.telefone}</td>
+                  <td className="px-4 py-3" style={{ color: "var(--color-text-secondary)" }}>{c.placas.join(", ")}</td>
+                  <td className="px-4 py-3">{c.qtdServicos}</td>
+                  <td className="px-4 py-3 font-medium" style={{ color: "var(--color-accent)" }}>
+                    R$ {c.totalGasto.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3" style={{ color: "var(--color-text-muted)" }}>
+                    {new Date(c.ultimoAtendimento).toLocaleDateString("pt-BR")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── VEÍCULOS ────────────────────────────────────────────────────────────────
+interface HistoricoVeiculo {
+  id: string;
+  servicoNome: string;
+  data: string;
+  status: string;
+}
+interface VeiculoAgregado {
+  placa: string;
+  modelo: string;
+  clienteNome: string;
+  clienteTelefone: string;
+  qtdServicos: number;
+  ultimoServico: string;
+  historico: HistoricoVeiculo[];
+}
+
+function Veiculos({ user }: { user: User }) {
+  const [veiculos, setVeiculos] = useState<VeiculoAgregado[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [expandido, setExpandido] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function carregar() {
+      setCarregando(true);
+      const token = await user.getIdToken();
+      const res = await fetch("/api/veiculos", { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setVeiculos(data.veiculos ?? []);
+      setCarregando(false);
+    }
+    carregar();
+  }, [user]);
+
+  const filtrados = veiculos.filter(
+    (v) =>
+      v.placa.toLowerCase().includes(busca.toLowerCase()) ||
+      v.modelo.toLowerCase().includes(busca.toLowerCase()) ||
+      v.clienteNome.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-bold">Veículos</h2>
+        <input
+          className="input text-sm max-w-xs"
+          placeholder="Buscar por placa, modelo ou cliente..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </div>
+
+      {carregando ? (
+        <div className="card h-40 animate-pulse" />
+      ) : filtrados.length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Nenhum veículo encontrado.</p>
+      ) : (
+        <div className="space-y-2">
+          {filtrados.map((v) => (
+            <div key={v.placa} className="card overflow-hidden">
+              <button
+                onClick={() => setExpandido(expandido === v.placa ? null : v.placa)}
+                className="w-full flex items-center justify-between gap-4 p-4 text-left"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold">🚗 {v.placa} {v.modelo ? `— ${v.modelo}` : ""}</p>
+                  <p className="text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                    {v.clienteNome} · {v.clienteTelefone}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-medium">{v.qtdServicos} serviço(s)</p>
+                  <p className="text-xs" style={{ color: "var(--color-accent)" }}>
+                    {expandido === v.placa ? "Fechar ▲" : "Ver histórico ▼"}
+                  </p>
+                </div>
+              </button>
+              {expandido === v.placa && (
+                <div style={{ borderTop: "0.5px solid var(--color-border)" }} className="p-4 space-y-2">
+                  {v.historico.map((h) => (
+                    <div key={h.id} className="flex items-center justify-between text-sm">
+                      <span>{h.servicoNome}</span>
+                      <span style={{ color: "var(--color-text-muted)" }}>
+                        {new Date(h.data).toLocaleDateString("pt-BR")} · {h.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── RELATÓRIOS ──────────────────────────────────────────────────────────────
+interface RelatorioData {
+  receitaTotal: number;
+  ticketMedio: number;
+  totalAtendimentos: number;
+  totalCancelados: number;
+  receitaSerie: { data: string; total: number }[];
+  servicosMaisVendidos: { nome: string; qtd: number; total: number }[];
+  clientesRecorrentes: { nome: string; qtd: number; total: number }[];
+}
+
+function Relatorios({ user }: { user: User }) {
+  const [dados, setDados] = useState<RelatorioData | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [periodo, setPeriodo] = useState({ inicio: "", fim: "" });
+
+  async function carregar() {
+    setCarregando(true);
+    const token = await user.getIdToken();
+    const params = new URLSearchParams();
+    if (periodo.inicio) params.set("inicio", periodo.inicio);
+    if (periodo.fim) params.set("fim", periodo.fim);
+    const res = await fetch(`/api/relatorios?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    setDados(data);
+    setCarregando(false);
+  }
+
+  useEffect(() => { carregar(); }, [user]);
+
+  const maiorReceita = dados?.receitaSerie.reduce((max, d) => Math.max(max, d.total), 0) || 1;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-bold">Relatórios</h2>
+        <div className="flex items-center gap-2">
+          <input type="date" className="input text-sm" value={periodo.inicio}
+            onChange={(e) => setPeriodo({ ...periodo, inicio: e.target.value })} />
+          <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>até</span>
+          <input type="date" className="input text-sm" value={periodo.fim}
+            onChange={(e) => setPeriodo({ ...periodo, fim: e.target.value })} />
+          <button onClick={carregar} className="btn-primary text-sm px-4 py-2">Filtrar</button>
+        </div>
+      </div>
+
+      {carregando || !dados ? (
+        <div className="grid grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="card h-24 animate-pulse" />)}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="card p-4">
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Receita total</p>
+              <p className="text-xl font-bold mt-1" style={{ color: "var(--color-accent)" }}>R$ {dados.receitaTotal.toFixed(2)}</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Ticket médio</p>
+              <p className="text-xl font-bold mt-1">R$ {dados.ticketMedio.toFixed(2)}</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Atendimentos</p>
+              <p className="text-xl font-bold mt-1">{dados.totalAtendimentos}</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Cancelados</p>
+              <p className="text-xl font-bold mt-1" style={{ color: "var(--color-danger)" }}>{dados.totalCancelados}</p>
+            </div>
+          </div>
+
+          {/* Gráfico simples de barras — receita por dia */}
+          {dados.receitaSerie.length > 0 && (
+            <div className="card p-5">
+              <p className="text-sm font-medium mb-4">Receita por dia</p>
+              <div className="flex items-end gap-1.5" style={{ height: 140 }}>
+                {dados.receitaSerie.map((d) => (
+                  <div key={d.data} className="flex-1 flex flex-col items-center justify-end gap-1 group relative">
+                    <div
+                      className="w-full rounded-t transition"
+                      style={{
+                        height: `${Math.max((d.total / maiorReceita) * 120, 4)}px`,
+                        backgroundColor: "var(--color-accent)",
+                      }}
+                      title={`${d.data}: R$ ${d.total.toFixed(2)}`}
+                    />
+                    <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
+                      {d.data.slice(8, 10)}/{d.data.slice(5, 7)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="card p-5">
+              <p className="text-sm font-medium mb-3">Serviços mais vendidos</p>
+              <div className="space-y-2">
+                {dados.servicosMaisVendidos.length === 0 && (
+                  <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Sem dados no período.</p>
+                )}
+                {dados.servicosMaisVendidos.map((s) => (
+                  <div key={s.nome} className="flex items-center justify-between text-sm">
+                    <span>{s.nome}</span>
+                    <span style={{ color: "var(--color-text-muted)" }}>{s.qtd}x · R$ {s.total.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <p className="text-sm font-medium mb-3">Clientes recorrentes</p>
+              <div className="space-y-2">
+                {dados.clientesRecorrentes.length === 0 && (
+                  <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Nenhum cliente recorrente no período.</p>
+                )}
+                {dados.clientesRecorrentes.map((c) => (
+                  <div key={c.nome} className="flex items-center justify-between text-sm">
+                    <span>{c.nome}</span>
+                    <span style={{ color: "var(--color-text-muted)" }}>{c.qtd}x · R$ {c.total.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
