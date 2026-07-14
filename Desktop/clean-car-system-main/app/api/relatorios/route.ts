@@ -33,10 +33,10 @@ export async function GET(req: NextRequest) {
     const snap = await getAdminDb().collection("ordens_servico").get();
     let ordens = snap.docs.map((d: QueryDocumentSnapshot) => d.data() as OrdemServico);
 
-    if (inicio) ordens = ordens.filter((os) => os.dataAgendada >= inicio);
-    if (fim) ordens = ordens.filter((os) => os.dataAgendada <= fim);
+    if (inicio) ordens = ordens.filter((os: OrdemServico) => os.dataAgendada >= inicio);
+    if (fim) ordens = ordens.filter((os: OrdemServico) => os.dataAgendada <= fim);
 
-    const validas = ordens.filter((os) => os.status !== "cancelado");
+    const validas = ordens.filter((os: OrdemServico) => os.status !== "cancelado");
 
     // Receita por dia
     const receitaPorDia = new Map<string, number>();
