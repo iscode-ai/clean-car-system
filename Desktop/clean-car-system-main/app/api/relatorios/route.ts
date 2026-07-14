@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.qtd - a.qtd);
 
     // Totais gerais
-    const receitaTotal = validas.reduce((acc, os) => acc + (os.servicoPreco || 0), 0);
+    const receitaTotal = validas.reduce((acc: number, os: OrdemServico) => acc + (os.servicoPreco || 0), 0);
     const ticketMedio = validas.length > 0 ? receitaTotal / validas.length : 0;
 
     return NextResponse.json({
