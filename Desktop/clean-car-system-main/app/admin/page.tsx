@@ -7,7 +7,7 @@ import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/
 import { auth, db } from "@/lib/firebase";
 import { OrdemServico, Servico, UsuarioSistema, STATUS_LABELS, StatusOS } from "@/types";
 
-type Aba = "dashboard" | "agenda" | "servicos" | "usuarios";
+type Aba = "dashboard" | "agenda" | "servicos" | "usuarios" | "clientes" | "veiculos" | "relatorios";
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -59,7 +59,7 @@ export default function AdminPage() {
       <div className="border-b" style={{ borderColor: "var(--color-border)" }}>
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-1">
-            {(["dashboard", "agenda", "servicos", "usuarios"] as Aba[]).map((a) => (
+            {(["dashboard", "agenda", "servicos", "usuarios", "clientes", "veiculos", "relatorios"] as Aba[]).map((a) => (
               <button
                 key={a}
                 onClick={() => setAba(a)}
@@ -70,7 +70,7 @@ export default function AdminPage() {
                     : { color: "var(--color-text-muted)", borderColor: "transparent" }
                 }
               >
-                {{ dashboard: "Dashboard", agenda: "Agenda", servicos: "Serviços", usuarios: "Usuários" }[a]}
+                {{ dashboard: "Dashboard", agenda: "Agenda", servicos: "Serviços", usuarios: "Usuários", clientes: "Clientes", veiculos: "Veículos", relatorios: "Relatórios" }[a]}
               </button>
             ))}
           </div>
@@ -85,6 +85,9 @@ export default function AdminPage() {
         {aba === "agenda" && <Agenda user={user} />}
         {aba === "servicos" && <Servicos user={user} />}
         {aba === "usuarios" && <Usuarios user={user} />}
+        {aba === "clientes" && <Clientes user={user} />}
+        {aba === "veiculos" && <Veiculos user={user} />}
+        {aba === "relatorios" && <Relatorios user={user} />}
       </main>
     </div>
   );
