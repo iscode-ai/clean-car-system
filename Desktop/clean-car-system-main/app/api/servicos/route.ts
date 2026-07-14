@@ -92,3 +92,33 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const caller = await autenticarAdmin(req);
+  if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ erro: "ID obrigatório." }, { status: 400 });
+    await getAdminDb().collection("servicos").doc(id).delete();
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Erro ao excluir serviço:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const caller = await autenticarAdmin(req);
+  if (!caller) return NextResponse.json({ erro: "Não autorizado." }, { status: 403 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ erro: "ID obrigatório." }, { status: 400 });
+    await getAdminDb().collection("servicos").doc(id).delete();
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Erro ao excluir serviço:", err);
+    return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
+  }
+}

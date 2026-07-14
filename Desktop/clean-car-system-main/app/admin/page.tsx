@@ -232,6 +232,7 @@ function Agenda({ user }: { user: User }) {
 function Servicos({ user }: { user: User }) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [form, setForm] = useState({ nome: "", descricao: "", preco: "", duracaoMin: "" });
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -244,27 +245,65 @@ function Servicos({ user }: { user: User }) {
     setServicos(data.servicos ?? []);
   }
 
+  function iniciarEdicao(s: Servico) {
+    setEditandoId(s.id);
+    setForm({
+      nome: s.nome,
+      descricao: s.descricao || "",
+      preco: String(s.preco),
+      duracaoMin: String(s.duracaoMin),
+    });
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setForm({ nome: "", descricao: "", preco: "", duracaoMin: "" });
+    setErro("");
+  }
+
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     setSalvando(true);
     setErro("");
     const token = await user.getIdToken();
-    const res = await fetch("/api/servicos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        nome: form.nome,
-        descricao: form.descricao,
-        preco: parseFloat(form.preco),
-        duracaoMin: parseInt(form.duracaoMin),
-      }),
-    });
-    if (res.ok) {
-      setForm({ nome: "", descricao: "", preco: "", duracaoMin: "" });
-      await carregar();
+
+    if (editandoId) {
+      const res = await fetch("/api/servicos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          id: editandoId,
+          nome: form.nome,
+          descricao: form.descricao,
+          preco: parseFloat(form.preco),
+          duracaoMin: parseInt(form.duracaoMin),
+        }),
+      });
+      if (res.ok) {
+        cancelarEdicao();
+        await carregar();
+      } else {
+        const d = await res.json();
+        setErro(d.erro || "Erro ao salvar.");
+      }
     } else {
-      const d = await res.json();
-      setErro(d.erro || "Erro ao salvar.");
+      const res = await fetch("/api/servicos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nome: form.nome,
+          descricao: form.descricao,
+          preco: parseFloat(form.preco),
+          duracaoMin: parseInt(form.duracaoMin),
+        }),
+      });
+      if (res.ok) {
+        setForm({ nome: "", descricao: "", preco: "", duracaoMin: "" });
+        await carregar();
+      } else {
+        const d = await res.json();
+        setErro(d.erro || "Erro ao salvar.");
+      }
     }
     setSalvando(false);
   }
@@ -279,12 +318,34 @@ function Servicos({ user }: { user: User }) {
     await carregar();
   }
 
+  async function excluir(s: Servico) {
+    if (!confirm(`Excluir o serviço "${s.nome}"? Essa ação não pode ser desfeita.`)) return;
+    const token = await user.getIdToken();
+    const res = await fetch(`/api/servicos?id=${s.id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      await carregar();
+    } else {
+      const d = await res.json();
+      alert(d.erro || "Erro ao excluir.");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Serviços</h2>
 
       <form onSubmit={salvar} className="card p-5 space-y-4">
-        <p className="text-sm font-medium">Novo serviço</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">{editandoId ? "Editar serviço" : "Novo serviço"}</p>
+          {editandoId && (
+            <button type="button" onClick={cancelarEdicao} className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Cancelar edição
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <label className="col-span-2 block">
             <span className="label text-xs">Nome</span>
@@ -309,7 +370,7 @@ function Servicos({ user }: { user: User }) {
         </div>
         {erro && <p className="text-sm" style={{ color: "var(--color-danger)" }}>{erro}</p>}
         <button disabled={salvando} className="btn-primary text-sm px-4 py-2.5">
-          {salvando ? "Salvando..." : "Adicionar serviço"}
+          {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Adicionar serviço"}
         </button>
       </form>
 
@@ -317,7 +378,7 @@ function Servicos({ user }: { user: User }) {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ backgroundColor: "var(--color-surface-raised)" }}>
-              {["Nome", "Preço", "Duração", "Ativo"].map((h) => (
+              {["Nome", "Preço", "Duração", "Ativo", "Ações"].map((h) => (
                 <th key={h} className="px-4 py-3 text-xs font-medium text-left" style={{ color: "var(--color-text-muted)" }}>{h}</th>
               ))}
             </tr>
@@ -344,6 +405,16 @@ function Servicos({ user }: { user: User }) {
                     {s.ativo ? "Ativo" : "Inativo"}
                   </button>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => iniciarEdicao(s)} className="text-xs font-medium" style={{ color: "var(--color-accent)" }}>
+                      Editar
+                    </button>
+                    <button onClick={() => excluir(s)} className="text-xs font-medium" style={{ color: "var(--color-danger)" }}>
+                      Excluir
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -352,7 +423,6 @@ function Servicos({ user }: { user: User }) {
     </div>
   );
 }
-
 // ─── USUÁRIOS ────────────────────────────────────────────────────────────────
 
 function Usuarios({ user }: { user: User }) {

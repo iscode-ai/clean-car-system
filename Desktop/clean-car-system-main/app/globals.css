@@ -87,3 +87,18 @@
     @apply inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap;
   }
 }
+
+/* Cursor pointer em todos os elementos interativos */
+button,
+a,
+summary,
+[role="button"],
+select,
+label input[type="checkbox"],
+label input[type="radio"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
