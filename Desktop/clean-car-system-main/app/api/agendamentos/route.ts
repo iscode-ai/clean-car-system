@@ -5,6 +5,7 @@ import { gerarNumeroOS, gerarTokenQRCode, formatarTelefoneE164 } from "@/lib/os"
 import { dispararWhatsApp } from "@/lib/n8n";
 import { OrdemServico } from "@/types";
 import { autenticar } from "@/lib/authServer";
+import { verificarRateLimit, obterIP } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -58,6 +59,15 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = obterIP(req);
+    const permitido = verificarRateLimit(`agendar:${ip}`, 5, 10 * 60 * 1000);
+    if (!permitido) {
+      return NextResponse.json(
+        { erro: "Muitas tentativas de agendamento. Aguarde alguns minutos e tente novamente." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { clienteNome, clienteTelefone, placa, veiculoModelo, servicoId, dataAgendada, horaAgendada } = body;
 
