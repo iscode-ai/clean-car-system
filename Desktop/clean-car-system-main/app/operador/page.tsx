@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { OrdemServico, STATUS_LABELS, STATUS_FLOW, StatusOS } from "@/types";
 import PageHeader from "../components/PageHeader";
@@ -16,8 +16,6 @@ export default function OperadorPage() {
   const [user, setUser] = useState<User | null>(null);
   const [tela, setTela] = useState<Tela>("login");
   const [os, setOs] = useState<OrdemServico | null>(null);
-  const [loginForm, setLoginForm] = useState({ email: "", senha: "" });
-  const [loginErro, setLoginErro] = useState("");
   const [scanErro, setScanErro] = useState("");
   const [atualizando, setAtualizando] = useState(false);
   const [observacao, setObservacao] = useState("");
@@ -172,47 +170,13 @@ export default function OperadorPage() {
     : null;
 
   // ─── LOGIN ───
+  // Sempre redireciona para o login centralizado do painel, que valida a role
+  // (admin/operador) via /api/painel/session antes de liberar acesso.
   if (!user) {
-    return (
-      <main className="max-w-sm mx-auto px-6 py-16">
-        <h1 className="text-2xl font-bold mb-6">Login do operador</h1>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setLoginErro("");
-            try {
-              await signInWithEmailAndPassword(auth, loginForm.email, loginForm.senha);
-            } catch {
-              setLoginErro("E-mail ou senha inválidos.");
-            }
-          }}
-          className="space-y-4"
-        >
-          <label className="block">
-            <span className="label">E-mail</span>
-            <input
-              type="email"
-              required
-              className="input mt-1.5"
-              value={loginForm.email}
-              onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-            />
-          </label>
-          <label className="block">
-            <span className="label">Senha</span>
-            <input
-              type="password"
-              required
-              className="input mt-1.5"
-              value={loginForm.senha}
-              onChange={(e) => setLoginForm({ ...loginForm, senha: e.target.value })}
-            />
-          </label>
-          {loginErro && <p className="text-sm" style={{ color: "var(--color-danger)" }}>{loginErro}</p>}
-          <button className="btn-primary w-full">Entrar</button>
-        </form>
-      </main>
-    );
+    if (typeof window !== "undefined") {
+      window.location.href = "/painel/login?redirect=/operador";
+    }
+    return null;
   }
 
   // ─── SCANNER ───
